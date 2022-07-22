@@ -6,10 +6,11 @@ import "./BoardContent.scss";
 
 import Column from "components/Column/Column";
 import { mapOrder } from "utilities/sorts";
+import { applyDrag } from "utilities/dragDrop";
 
 import { initialData } from "actions/initalData";
 
-function BoarContent(props) {
+function BoarContent() {
   const [board, setBoard] = useState({});
   const [columns, setColumns] = useState([]);
 
@@ -33,7 +34,27 @@ function BoarContent(props) {
   }
 
   const onColumnDrop = (dropResult) => {
-    console.log(dropResult);
+    let newColumns = [...columns];
+    newColumns = applyDrag(newColumns, dropResult);
+
+    let newBoard = { ...board };
+    newBoard.columnOrder = newColumns.map((c) => c.id);
+    newBoard.columns = newColumns;
+    setColumns(newColumns);
+    setBoard(newBoard);
+  };
+
+  const onCardDrop = (columnId, dropResult) => {
+    const { removedIndex, addedIndex } = dropResult;
+    if (removedIndex !== null || addedIndex !== null) {
+      let newColumns = [...columns];
+
+      let currentColumn = newColumns.find((c) => c.id === columnId);
+      currentColumn.cards = applyDrag(currentColumn.cards, dropResult);
+      currentColumn.cardOrder = currentColumn.cards.map((i) => i.id);
+
+      setColumns(newColumns);
+    }
   };
 
   return (
@@ -51,10 +72,14 @@ function BoarContent(props) {
       >
         {columns.map((column, index) => (
           <Draggable key={index}>
-            <Column column={column} />
+            <Column onCardDrop={onCardDrop} column={column} />
           </Draggable>
         ))}
       </Container>
+      <div className="add-new-column">
+        <i className="fa-solid fa-plus icon"></i>
+        Add another column
+      </div>
     </div>
   );
 }
