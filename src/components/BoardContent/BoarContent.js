@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { isEmpty } from "lodash";
+import { Container, Draggable } from "react-smooth-dnd";
 
 import "./BoardContent.scss";
 
@@ -8,7 +9,7 @@ import { mapOrder } from "utilities/sorts";
 
 import { initialData } from "actions/initalData";
 
-function BoarContent() {
+function BoarContent(props) {
   const [board, setBoard] = useState({});
   const [columns, setColumns] = useState([]);
 
@@ -31,11 +32,29 @@ function BoarContent() {
     );
   }
 
+  const onColumnDrop = (dropResult) => {
+    console.log(dropResult);
+  };
+
   return (
     <div className="board-content">
-      {columns.map((column) => (
-        <Column key={column.id} column={column} />
-      ))}
+      <Container
+        orientation="horizontal"
+        onDrop={onColumnDrop}
+        getChildPayload={(index) => columns[index]}
+        dragHandleSelector=".column-drag-handle"
+        dropPlaceholder={{
+          animationDuration: 150,
+          showOnTop: true,
+          className: "column-drop-preview",
+        }}
+      >
+        {columns.map((column, index) => (
+          <Draggable key={index}>
+            <Column column={column} />
+          </Draggable>
+        ))}
+      </Container>
     </div>
   );
 }
