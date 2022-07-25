@@ -127,7 +127,6 @@ function BoarContent() {
     setBoard(newBoard);
   };
 
-
   return (
     <div className="board-content">
       <Container
@@ -176,10 +175,7 @@ function BoarContent() {
               <Button variant="success" size="sm" onClick={addNewColumn}>
                 Add column
               </Button>{" "}
-              <span
-                className="cancel-new-column"
-                onClick={toggleOpenNewColumnForm}
-              >
+              <span className="cancel-icon" onClick={toggleOpenNewColumnForm}>
                 <i class="fa-solid fa-trash"></i>
               </span>
             </Col>
