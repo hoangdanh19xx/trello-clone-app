@@ -110,7 +110,9 @@ function Column({ column, onCardDrop, onUpdateColumn }) {
             ></Dropdown.Toggle>
 
             <Dropdown.Menu>
-              <Dropdown.Item>Add card...</Dropdown.Item>
+              <Dropdown.Item onClick={toggleOpenNewCardForm}>
+                Add card...
+              </Dropdown.Item>
               <Dropdown.Item onClick={toggleShowConfirmModal}>
                 Remove column...
               </Dropdown.Item>
