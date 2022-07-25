@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { isEmpty } from "lodash";
 import { Container, Draggable } from "react-smooth-dnd";
 import BootstrapContainer from "react-bootstrap/Container";
@@ -19,14 +19,13 @@ function BoarContent() {
   const [board, setBoard] = useState({});
   const [columns, setColumns] = useState([]);
   const [openNewColumnForm, setOpenNewColumnForm] = useState(false);
+  const toggleOpenNewColumnForm = () =>
+    setOpenNewColumnForm(!openNewColumnForm);
 
   const newColumnInputRef = useRef(null);
 
   const [newColumnTitle, setNewColumnTitle] = useState("");
-  const onNewColumnTitleChange = useCallback(
-    (e) => setNewColumnTitle(e.target.value),
-    []
-  );
+  const onNewColumnTitleChange = (e) => setNewColumnTitle(e.target.value);
 
   useEffect(() => {
     const boardFromDB = initialData.boards.find(
@@ -77,9 +76,6 @@ function BoarContent() {
     }
   };
 
-  const toggleOpenNewColumnForm = () =>
-    setOpenNewColumnForm(!openNewColumnForm);
-
   const addNewColumn = () => {
     if (!newColumnTitle) {
       newColumnInputRef.current.focus();
@@ -120,6 +116,7 @@ function BoarContent() {
       newColumns.splice(columnIndexToUpdate, 1);
     } else {
       // update column
+      console.log(newColumnToUpdate);
       newColumns.splice(columnIndexToUpdate, 1, newColumnToUpdate);
     }
 
@@ -129,6 +126,7 @@ function BoarContent() {
     setColumns(newColumns);
     setBoard(newBoard);
   };
+
 
   return (
     <div className="board-content">
