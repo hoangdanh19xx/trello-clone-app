@@ -8,12 +8,10 @@ import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 
 import "./BoardContent.scss";
-
 import Column from "components/Column/Column";
 import { mapOrder } from "utilities/sorts";
 import { applyDrag } from "utilities/dragDrop";
-
-import { initialData } from "actions/initalData";
+import { fetchBoardDetails } from "actions/ApiCall";
 
 function BoarContent() {
   const [board, setBoard] = useState({});
@@ -28,14 +26,11 @@ function BoarContent() {
   const onNewColumnTitleChange = (e) => setNewColumnTitle(e.target.value);
 
   useEffect(() => {
-    const boardFromDB = initialData.boards.find(
-      (board) => board.id === "board-1"
-    );
-
-    if (boardFromDB) {
-      setBoard(boardFromDB);
-      setColumns(mapOrder(boardFromDB.columns, boardFromDB.columnOrder, "id"));
-    }
+    fetchBoardDetails("62df686a3f7de993eae3b7fb").then((board) => {
+      console.log(board);
+      setBoard(board);
+      setColumns(mapOrder(board.columns, board.columnOrder, "_id"));
+    });
   }, []);
 
   useEffect(() => {
@@ -57,7 +52,7 @@ function BoarContent() {
     newColumns = applyDrag(newColumns, dropResult);
 
     let newBoard = { ...board };
-    newBoard.columnOrder = newColumns.map((c) => c.id);
+    newBoard.columnOrder = newColumns.map((c) => c._id);
     newBoard.columns = newColumns;
     setColumns(newColumns);
     setBoard(newBoard);
@@ -68,9 +63,9 @@ function BoarContent() {
     if (removedIndex !== null || addedIndex !== null) {
       let newColumns = [...columns];
 
-      let currentColumn = newColumns.find((c) => c.id === columnId);
+      let currentColumn = newColumns.find((c) => c._id === columnId);
       currentColumn.cards = applyDrag(currentColumn.cards, dropResult);
-      currentColumn.cardOrder = currentColumn.cards.map((i) => i.id);
+      currentColumn.cardOrder = currentColumn.cards.map((i) => i._id);
 
       setColumns(newColumns);
     }
@@ -94,7 +89,7 @@ function BoarContent() {
     newColumns.push(newColumnToAdd);
 
     let newBoard = { ...board };
-    newBoard.columnOrder = newColumns.map((c) => c.id);
+    newBoard.columnOrder = newColumns.map((c) => c._id);
     newBoard.columns = newColumns;
     setColumns(newColumns);
     setBoard(newBoard);
@@ -104,11 +99,11 @@ function BoarContent() {
   };
 
   const onUpdateColumn = (newColumnToUpdate) => {
-    const columnIdToUpdate = newColumnToUpdate.id;
+    const columnIdToUpdate = newColumnToUpdate._id;
 
     let newColumns = [...columns];
     const columnIndexToUpdate = newColumns.findIndex(
-      (i) => i.id === columnIdToUpdate
+      (i) => i._id === columnIdToUpdate
     );
 
     if (newColumnToUpdate._destroy) {
@@ -116,12 +111,11 @@ function BoarContent() {
       newColumns.splice(columnIndexToUpdate, 1);
     } else {
       // update column
-      console.log(newColumnToUpdate);
       newColumns.splice(columnIndexToUpdate, 1, newColumnToUpdate);
     }
 
     let newBoard = { ...board };
-    newBoard.columnOrder = newColumns.map((c) => c.id);
+    newBoard.columnOrder = newColumns.map((c) => c._id);
     newBoard.columns = newColumns;
     setColumns(newColumns);
     setBoard(newBoard);
@@ -176,7 +170,7 @@ function BoarContent() {
                 Add column
               </Button>{" "}
               <span className="cancel-icon" onClick={toggleOpenNewColumnForm}>
-                <i class="fa-solid fa-trash"></i>
+                <i className="fa-solid fa-trash"></i>
               </span>
             </Col>
           </Row>
