@@ -11,7 +11,7 @@ import "./BoardContent.scss";
 import Column from "components/Column/Column";
 import { mapOrder } from "utilities/sorts";
 import { applyDrag } from "utilities/dragDrop";
-import { fetchBoardDetails } from "actions/ApiCall";
+import { fetchBoardDetails, createNewColumn } from "actions/ApiCall";
 
 function BoarContent() {
   const [board, setBoard] = useState({});
@@ -26,8 +26,7 @@ function BoarContent() {
   const onNewColumnTitleChange = (e) => setNewColumnTitle(e.target.value);
 
   useEffect(() => {
-    fetchBoardDetails("62df686a3f7de993eae3b7fb").then((board) => {
-      console.log(board);
+    fetchBoardDetails("62dfc91c3f7de993ea2c3b23").then((board) => {
       setBoard(board);
       setColumns(mapOrder(board.columns, board.columnOrder, "_id"));
     });
@@ -78,27 +77,26 @@ function BoarContent() {
     }
 
     const newColumnToAdd = {
-      id: Math.random().toString(36).substr(2, 5),
-      boardId: "board-1",
+      boardId: board._id,
       title: newColumnTitle.trim(),
-      cardOrder: [],
-      cards: [],
     };
 
-    const newColumns = [...columns];
-    newColumns.push(newColumnToAdd);
+    createNewColumn(newColumnToAdd).then((newColumn) => {
+      const newColumns = [...columns];
+      newColumns.push(newColumn);
 
-    let newBoard = { ...board };
-    newBoard.columnOrder = newColumns.map((c) => c._id);
-    newBoard.columns = newColumns;
-    setColumns(newColumns);
-    setBoard(newBoard);
+      let newBoard = { ...board };
+      newBoard.columnOrder = newColumns.map((c) => c._id);
+      newBoard.columns = newColumns;
 
-    setNewColumnTitle("");
-    toggleOpenNewColumnForm();
+      setColumns(newColumns);
+      setBoard(newBoard);
+      setNewColumnTitle("");
+      toggleOpenNewColumnForm();
+    });
   };
 
-  const onUpdateColumn = (newColumnToUpdate) => {
+  const onUpdateColumnState = (newColumnToUpdate) => {
     const columnIdToUpdate = newColumnToUpdate._id;
 
     let newColumns = [...columns];
@@ -139,7 +137,7 @@ function BoarContent() {
             <Column
               onCardDrop={onCardDrop}
               column={column}
-              onUpdateColumn={onUpdateColumn}
+              onUpdateColumnState={onUpdateColumnState}
             />
           </Draggable>
         ))}

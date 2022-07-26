@@ -14,8 +14,9 @@ import {
   saveContentAfterPressEnter,
   selectAllInlineText,
 } from "utilities/contentEditable";
+import { createNewCard, updateColumn } from "actions/ApiCall";
 
-function Column({ column, onCardDrop, onUpdateColumn }) {
+function Column({ column, onCardDrop, onUpdateColumnState }) {
   const cards = mapOrder(column.cards, column.cardOrder, "_id");
 
   const [showConfirmModal, setShowConfimModal] = useState(false);
@@ -42,23 +43,36 @@ function Column({ column, onCardDrop, onUpdateColumn }) {
     }
   }, [openNewCardForm]);
 
+  // Remove column title
   const onConfirmModalAction = (type) => {
     if (type === MODAL_ACTION_CONFIRM) {
       const newColumn = {
         ...column,
         _destroy: true,
       };
-      onUpdateColumn(newColumn);
+
+      // Call api update column
+      updateColumn(newColumn._id, newColumn).then((updatedColumn) => {
+        onUpdateColumnState(updatedColumn);
+      });
     }
     toggleShowConfirmModal();
   };
 
+  // Update column title
   const handleColumnTitleBlur = () => {
     const newColumn = {
       ...column,
       title: columnTitle,
     };
-    onUpdateColumn(newColumn);
+
+    if (columnTitle !== column.title) {
+      // Call api update column
+      updateColumn(newColumn._id, newColumn).then((updatedColumn) => {
+        updateColumn.cards = newColumn.cards;
+        onUpdateColumnState(updatedColumn);
+      });
+    }
   };
 
   const addNewCard = () => {
@@ -68,20 +82,21 @@ function Column({ column, onCardDrop, onUpdateColumn }) {
     }
 
     const newCardToAdd = {
-      id: Math.random().toString(36).substr(2, 5),
       boardId: column.boardId,
       columnId: column._id,
       title: newCardTitle.trim(),
-      cover: null,
     };
 
-    let newColumn = cloneDeep(column);
-    newColumn.cards.push(newCardToAdd);
-    newColumn.cardOrder.push(newCardToAdd._id);
+    // call APIs
+    createNewCard(newCardToAdd).then((card) => {
+      let newColumn = cloneDeep(column);
+      newColumn.cards.push(card);
+      newColumn.cardOrder.push(card._id);
 
-    onUpdateColumn(newColumn);
-    setNewCardTitle("");
-    toggleOpenNewCardForm();
+      onUpdateColumnState(newColumn);
+      setNewCardTitle("");
+      toggleOpenNewCardForm();
+    });
   };
 
   return (
