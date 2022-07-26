@@ -16,7 +16,7 @@ import {
 } from "utilities/contentEditable";
 
 function Column({ column, onCardDrop, onUpdateColumn }) {
-  const cards = mapOrder(column.cards, column.cardOrder, "id");
+  const cards = mapOrder(column.cards, column.cardOrder, "_id");
 
   const [showConfirmModal, setShowConfimModal] = useState(false);
   const toggleShowConfirmModal = () => setShowConfimModal(!showConfirmModal);
@@ -70,14 +70,14 @@ function Column({ column, onCardDrop, onUpdateColumn }) {
     const newCardToAdd = {
       id: Math.random().toString(36).substr(2, 5),
       boardId: column.boardId,
-      columnId: column.id,
+      columnId: column._id,
       title: newCardTitle.trim(),
       cover: null,
     };
 
     let newColumn = cloneDeep(column);
     newColumn.cards.push(newCardToAdd);
-    newColumn.cardOrder.push(newCardToAdd.id);
+    newColumn.cardOrder.push(newCardToAdd._id);
 
     onUpdateColumn(newColumn);
     setNewCardTitle("");
@@ -129,7 +129,7 @@ function Column({ column, onCardDrop, onUpdateColumn }) {
       <div className="card-list">
         <Container
           groupName="columns"
-          onDrop={(dropResult) => onCardDrop(column.id, dropResult)}
+          onDrop={(dropResult) => onCardDrop(column._id, dropResult)}
           getChildPayload={(index) => cards[index]}
           dragClass="card-ghost"
           dropClass="card-ghost-drop"
