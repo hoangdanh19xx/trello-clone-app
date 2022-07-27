@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { isEmpty, cloneDeep } from "lodash";
 import { Container, Draggable } from "react-smooth-dnd";
 import BootstrapContainer from "react-bootstrap/Container";
@@ -79,8 +80,7 @@ function BoarContent() {
       currentColumn.cards = applyDrag(currentColumn.cards, dropResult);
       currentColumn.cardOrder = currentColumn.cards.map((i) => i._id);
 
-      // console.log(dropResult);
-      setColumns(newColumns);
+      flushSync(() => setColumns(newColumns));
 
       if (removedIndex !== null && addedIndex !== null) {
         /**
