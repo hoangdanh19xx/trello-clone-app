@@ -50,7 +50,7 @@ function BoardBar() {
           <Col sm={2} xs={12} className="col-no-padding">
             <div className="board-actions">
               <div className="item menu">
-                <i class="fa-solid fa-ellipsis"></i>
+                <i className="fa-solid fa-ellipsis"></i>
                 Show menu
               </div>
             </div>

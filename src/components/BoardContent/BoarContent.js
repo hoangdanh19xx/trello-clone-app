@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { isEmpty, cloneDeep } from "lodash";
-import { Container, Draggable } from "react-smooth-dnd";
+import { Container } from "react-smooth-dnd";
 import BootstrapContainer from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
@@ -9,15 +9,15 @@ import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 
 import "./BoardContent.scss";
-import Column from "components/Column/Column";
+import ListColumns from "components/ListColumns/ListColumns";
 import { mapOrder } from "utilities/sorts";
 import { applyDrag } from "utilities/dragDrop";
 import {
-  fetchBoardDetails,
-  createNewColumn,
-  updateBoard,
-  updateColumn,
-  updateCard,
+  fetchBoardDetailsAPI,
+  createNewColumnAPI,
+  updateBoardAPI,
+  updateColumnAPI,
+  updateCardAPI,
 } from "actions/ApiCall";
 
 function BoarContent() {
@@ -33,7 +33,7 @@ function BoarContent() {
   const onNewColumnTitleChange = (e) => setNewColumnTitle(e.target.value);
 
   useEffect(() => {
-    fetchBoardDetails("62dfc91c3f7de993ea2c3b23").then((board) => {
+    fetchBoardDetailsAPI("62dfc91c3f7de993ea2c3b23").then((board) => {
       setBoard(board);
       setColumns(mapOrder(board.columns, board.columnOrder, "_id"));
     });
@@ -54,10 +54,12 @@ function BoarContent() {
   }
 
   const onColumnDrop = (dropResult) => {
-    let newColumns = cloneDeep(columns);
+    const originalColumns = cloneDeep(columns);
+    let newColumns = [...columns];
     newColumns = applyDrag(newColumns, dropResult);
 
-    let newBoard = cloneDeep(board);
+    const originalBoard = cloneDeep(board);
+    let newBoard = { ...board };
     newBoard.columnOrder = newColumns.map((c) => c._id);
     newBoard.columns = newColumns;
 
@@ -65,7 +67,7 @@ function BoarContent() {
     setBoard(newBoard);
 
     // Call api update columnOrder in board details
-    updateBoard(newBoard._id, newBoard).catch(() => {
+    updateBoardAPI(newBoard._id, newBoard).catch(() => {
       setColumns(columns);
       setBoard(board);
     });
@@ -74,36 +76,45 @@ function BoarContent() {
   const onCardDrop = (columnId, dropResult) => {
     const { removedIndex, addedIndex } = dropResult;
     if (removedIndex !== null || addedIndex !== null) {
+      const originalColumns = cloneDeep(columns);
       let newColumns = [...columns];
 
       let currentColumn = newColumns.find((c) => c._id === columnId);
       currentColumn.cards = applyDrag(currentColumn.cards, dropResult);
       currentColumn.cardOrder = currentColumn.cards.map((i) => i._id);
 
+      const originalBoard = cloneDeep(board);
+      let newBoard = { ...board };
+      newBoard.columnOrder = newColumns.map((c) => c._id);
+      newBoard.columns = newColumns;
+
       flushSync(() => setColumns(newColumns));
+      flushSync(() => setBoard(newBoard));
 
       if (removedIndex !== null && addedIndex !== null) {
         /**
          * Action: move card inside its column
          * Call api update cardOrder in current column
          */
-        updateColumn(currentColumn._id, currentColumn).catch(() =>
-          setColumns(newColumns)
-        );
+        updateColumnAPI(currentColumn._id, currentColumn).catch(() => {
+          flushSync(setColumns(originalColumns));
+          flushSync(() => setBoard(originalBoard));
+        });
       } else {
         /**
          * Action: move card between two column
          */
         // Call api update cardOrder in current column
-        updateColumn(currentColumn._id, currentColumn).catch(() =>
-          setColumns(newColumns)
-        );
+        updateColumnAPI(currentColumn._id, currentColumn).catch(() => {
+          flushSync(setColumns(originalColumns));
+          flushSync(() => setBoard(originalBoard));
+        });
 
         if (addedIndex !== null) {
           let currentCard = cloneDeep(dropResult.payload);
           currentCard.columnId = currentColumn._id;
           // Call api update columnId in current card
-          updateCard(currentCard._id, currentCard);
+          updateCardAPI(currentCard._id, currentCard);
         }
       }
     }
@@ -120,7 +131,7 @@ function BoarContent() {
       title: newColumnTitle.trim(),
     };
 
-    createNewColumn(newColumnToAdd).then((newColumn) => {
+    createNewColumnAPI(newColumnToAdd).then((newColumn) => {
       const newColumns = [...columns];
       newColumns.push(newColumn);
 
@@ -171,15 +182,11 @@ function BoarContent() {
           className: "column-drop-preview",
         }}
       >
-        {columns.map((column, index) => (
-          <Draggable key={index}>
-            <Column
-              onCardDrop={onCardDrop}
-              column={column}
-              onUpdateColumnState={onUpdateColumnState}
-            />
-          </Draggable>
-        ))}
+        <ListColumns
+          columns={columns}
+          onCardDrop={onCardDrop}
+          onUpdateColumnState={onUpdateColumnState}
+        />
       </Container>
 
       <BootstrapContainer>
@@ -205,7 +212,7 @@ function BoarContent() {
               />
               <Button variant="success" size="sm" onClick={addNewColumn}>
                 Add column
-              </Button>{" "}
+              </Button>
               <span className="cancel-icon" onClick={toggleOpenNewColumnForm}>
                 <i className="fa-solid fa-trash"></i>
               </span>
