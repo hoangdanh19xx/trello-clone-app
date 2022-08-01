@@ -8,7 +8,6 @@ import { cloneDeep } from "lodash";
 import "./Column.scss";
 import ListCards from "components/ListCards/ListCards";
 import ConfirmModal from "components/Common/ConfirmModal";
-import { mapOrder } from "utilities/sorts";
 import { MODAL_ACTION_CONFIRM } from "utilities/constants";
 import {
   saveContentAfterPressEnter,
@@ -17,7 +16,7 @@ import {
 import { createNewCardAPI, updateColumnAPI } from "actions/ApiCall";
 
 function Column({ column, onCardDrop, onUpdateColumnState }) {
-  const cards = mapOrder(column.cards, column.cardOrder, "_id");
+  const cards = column.cards;
 
   const [showConfirmModal, setShowConfimModal] = useState(false);
   const toggleShowConfirmModal = () => setShowConfimModal(!showConfirmModal);
