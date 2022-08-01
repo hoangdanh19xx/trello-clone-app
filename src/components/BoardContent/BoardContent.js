@@ -10,18 +10,24 @@ import Button from "react-bootstrap/Button";
 
 import "./BoardContent.scss";
 import ListColumns from "components/ListColumns/ListColumns";
-import { mapOrder } from "utilities/sorts";
 import { applyDrag } from "utilities/dragDrop";
 import {
-  fetchBoardDetailsAPI,
   createNewColumnAPI,
   updateBoardAPI,
   updateColumnAPI,
   updateCardAPI,
 } from "actions/ApiCall";
 
-function BoarContent() {
-  const [board, setBoard] = useState({});
+import { useSelector, useDispatch } from "react-redux";
+import {
+  fetchFullBoardDetailsAPI,
+  selectCurrentFullBoard,
+  updateCurrentFullBoard,
+} from "redux/activeBoard/activeBoardSlice";
+
+function BoardContent() {
+  const dispatch = useDispatch();
+  const board = useSelector(selectCurrentFullBoard);
   const [columns, setColumns] = useState([]);
   const [openNewColumnForm, setOpenNewColumnForm] = useState(false);
   const toggleOpenNewColumnForm = () =>
@@ -33,11 +39,15 @@ function BoarContent() {
   const onNewColumnTitleChange = (e) => setNewColumnTitle(e.target.value);
 
   useEffect(() => {
-    fetchBoardDetailsAPI("62dfc91c3f7de993ea2c3b23").then((board) => {
-      setBoard(board);
-      setColumns(mapOrder(board.columns, board.columnOrder, "_id"));
-    });
-  }, []);
+    const boardId = "62dfc91c3f7de993ea2c3b23";
+    dispatch(fetchFullBoardDetailsAPI(boardId));
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (board) {
+      setColumns(board.columns);
+    }
+  }, [board]);
 
   useEffect(() => {
     if (newColumnInputRef && newColumnInputRef.current) {
@@ -64,12 +74,12 @@ function BoarContent() {
     newBoard.columns = newColumns;
 
     setColumns(newColumns);
-    setBoard(newBoard);
+    updateCurrentFullBoard(newBoard);
 
     // Call api update columnOrder in board details
     updateBoardAPI(newBoard._id, newBoard).catch(() => {
-      setColumns(columns);
-      setBoard(board);
+      setColumns(originalColumns);
+      updateCurrentFullBoard(originalBoard);
     });
   };
 
@@ -80,8 +90,20 @@ function BoarContent() {
       let newColumns = [...columns];
 
       let currentColumn = newColumns.find((c) => c._id === columnId);
-      currentColumn.cards = applyDrag(currentColumn.cards, dropResult);
-      currentColumn.cardOrder = currentColumn.cards.map((i) => i._id);
+      if (!currentColumn) return;
+      const newCards = applyDrag(currentColumn.cards, dropResult);
+      const newCardOrder = newCards.map((i) => i._id);
+
+      currentColumn = {
+        ...currentColumn,
+        cards: newCards,
+        cardOrder: newCardOrder,
+      };
+
+      const currentColumnIndex = newColumns.findIndex(
+        (c) => c._id === columnId
+      );
+      newColumns.splice(currentColumnIndex, 1, currentColumn);
 
       const originalBoard = cloneDeep(board);
       let newBoard = { ...board };
@@ -89,7 +111,7 @@ function BoarContent() {
       newBoard.columns = newColumns;
 
       flushSync(() => setColumns(newColumns));
-      flushSync(() => setBoard(newBoard));
+      flushSync(() => updateCurrentFullBoard(newBoard));
 
       if (removedIndex !== null && addedIndex !== null) {
         /**
@@ -98,7 +120,7 @@ function BoarContent() {
          */
         updateColumnAPI(currentColumn._id, currentColumn).catch(() => {
           flushSync(setColumns(originalColumns));
-          flushSync(() => setBoard(originalBoard));
+          flushSync(() => updateCurrentFullBoard(originalBoard));
         });
       } else {
         /**
@@ -107,7 +129,7 @@ function BoarContent() {
         // Call api update cardOrder in current column
         updateColumnAPI(currentColumn._id, currentColumn).catch(() => {
           flushSync(setColumns(originalColumns));
-          flushSync(() => setBoard(originalBoard));
+          flushSync(() => updateCurrentFullBoard(originalBoard));
         });
 
         if (addedIndex !== null) {
@@ -140,7 +162,7 @@ function BoarContent() {
       newBoard.columns = newColumns;
 
       setColumns(newColumns);
-      setBoard(newBoard);
+      updateCurrentFullBoard(newBoard);
       setNewColumnTitle("");
       toggleOpenNewColumnForm();
     });
@@ -166,7 +188,7 @@ function BoarContent() {
     newBoard.columnOrder = newColumns.map((c) => c._id);
     newBoard.columns = newColumns;
     setColumns(newColumns);
-    setBoard(newBoard);
+    updateCurrentFullBoard(newBoard);
   };
 
   return (
@@ -224,4 +246,4 @@ function BoarContent() {
   );
 }
 
-export default BoarContent;
+export default BoardContent;
